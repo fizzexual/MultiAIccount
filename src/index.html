@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Claude Accounts</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brandwrap">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="brandtext">
+            <h1 class="brand">Claude&nbsp;Accounts</h1>
+            <p class="subtitle">The real Claude desktop app — isolated, side by side.</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <span id="claudeStatus" class="status-chip is-checking">
+            <span class="status-led"></span><span id="statusText">Checking…</span>
+          </span>
+          <button id="addBtn" class="btn btn-primary">
+            <span class="plus">+</span> Add account
+          </button>
+        </div>
+      </header>
+
+      <div class="tip" id="tip" hidden>
+        <span class="tip-ico" aria-hidden="true">💡</span>
+        <span class="tip-msg">Signing into an isolated account? Use <b>Continue with email</b> — Google sign-in routes back to your <i>main</i> Claude, not the isolated window.</span>
+        <button class="tip-x" id="tipClose" aria-label="Dismiss tip">&times;</button>
+      </div>
+
+      <main class="content">
+        <section id="grid" class="grid" aria-label="Your accounts"></section>
+
+        <section id="empty" class="empty">
+          <div class="empty-badge" aria-hidden="true"></div>
+          <h2>No accounts yet</h2>
+          <p>
+            Add an account to launch the real Claude desktop app in its own
+            isolated profile — its own login, kept separate from your main one.
+          </p>
+          <button id="addBtn2" class="btn btn-primary">
+            <span class="plus">+</span> Add your first account
+          </button>
+        </section>
+
+        <section id="notInstalled" class="empty state-error">
+          <div class="empty-badge warn" aria-hidden="true">!</div>
+          <h2>Claude Desktop not found</h2>
+          <p>
+            This launcher runs isolated copies of your installed Claude desktop
+            app. Install Claude for Windows from the Microsoft Store, then reopen
+            this launcher.
+          </p>
+          <button id="recheckBtn" class="btn btn-ghost">Check again</button>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>Runs the real Claude desktop app in isolated profiles.</span>
+        <span class="sep">&middot;</span>
+        <span>Your main Claude login is never touched.</span>
+        <span class="sep">&middot;</span>
+        <span>Not affiliated with Anthropic.</span>
+      </footer>
+    </div>
+
+    <!-- floating context menu -->
+    <div id="menu" class="menu" hidden></div>
+
+    <!-- input / confirm modal -->
+    <div id="overlay" class="overlay" hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <h3 id="modalTitle">Add account</h3>
+        <p id="modalBody" class="modal-body"></p>
+        <input
+          id="modalInput"
+          class="input"
+          type="text"
+          maxlength="40"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="e.g. Work, Personal, Client A"
+        />
+        <div class="modal-actions">
+          <button id="modalCancel" class="btn btn-ghost">Cancel</button>
+          <button id="modalConfirm" class="btn btn-primary">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- first-run mirror preparing overlay -->
+    <div id="prepping" class="overlay" hidden>
+      <div class="modal prep">
+        <div class="spinner" aria-hidden="true"></div>
+        <h3>Preparing your isolated Claude…</h3>
+        <p class="modal-body">
+          One-time setup — copying the Claude app (~540&nbsp;MB) to a private
+          folder so it can run in isolated profiles. This only happens once, and
+          again briefly whenever Claude updates.
+        </p>
+      </div>
+    </div>
+
+    <div id="toasts" class="toasts"></div>
+
+    <script src="main.js" defer></script>
+  </body>
+</html>

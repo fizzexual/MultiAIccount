@@ -1,0 +1,13 @@
+# Rust / Tauri build output
+/src-tauri/target/
+/src-tauri/gen/schemas/
+
+# Local dev config (contains absolute, machine-specific paths)
+.claude/
+
+# Node (not used, but just in case)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
