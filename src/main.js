@@ -9,13 +9,24 @@ function makeMockInvoke() {
       { id: "3", name: "Client — Northwind", gradient: 2, created_at: 0, last_used: Math.floor(Date.now() / 1000) - 90000 },
     ];
   let open = new Set();
+  let mcp =
+    JSON.parse(localStorage.getItem("ca_mcp") || "null") || {
+      main: { Roblox_Studio: { command: "npx", args: ["-y", "roblox-studio-mcp"] } },
+    };
   const save = () => localStorage.setItem("ca_mock", JSON.stringify(store));
+  const saveMcp = () => localStorage.setItem("ca_mcp", JSON.stringify(mcp));
   return async (cmd, args = {}) => {
     switch (cmd) {
       case "get_status":
         return { installed: true, version: "1.18286.0 (preview)", mirror_ready: true };
       case "sync_mirror":
         return "1.18286.0 (preview)";
+      case "get_mcp_servers":
+        return mcp[args.id] || {};
+      case "set_mcp_servers":
+        mcp[args.id] = args.servers;
+        saveMcp();
+        return;
       case "list_accounts":
         return store.slice();
       case "add_account": {
@@ -66,6 +77,10 @@ const statusText = document.getElementById("statusText");
 const prepping = document.getElementById("prepping");
 const tipEl = document.getElementById("tip");
 const tipCloseEl = document.getElementById("tipClose");
+const syncOverlay = document.getElementById("syncOverlay");
+const syncSourceSel = document.getElementById("syncSource");
+const syncBody = document.getElementById("syncBody");
+const syncEmpty = document.getElementById("syncEmpty");
 
 /* ---------------- helpers ---------------- */
 function escapeHtml(s) {
@@ -342,6 +357,95 @@ if (tipCloseEl) {
     if (tipEl) tipEl.hidden = true;
   };
 }
+
+/* ---------------- config sync (MCP servers) ---------------- */
+let syncState = { source: "main", sourceServers: {}, targets: [] };
+
+async function openSync() {
+  if (!installed) {
+    toast("Claude Desktop isn't installed");
+    return;
+  }
+  syncSourceSel.innerHTML = "";
+  const opts = [{ id: "main", name: "Main Claude account" }, ...accounts.map((a) => ({ id: a.id, name: a.name }))];
+  opts.forEach((o) => {
+    const el = document.createElement("option");
+    el.value = o.id;
+    el.textContent = o.name;
+    syncSourceSel.appendChild(el);
+  });
+  syncOverlay.hidden = false;
+  await loadSyncMatrix();
+}
+
+async function loadSyncMatrix() {
+  const source = syncSourceSel.value || "main";
+  const sourceServers = (await invoke("get_mcp_servers", { id: source })) || {};
+  const names = Object.keys(sourceServers);
+  syncState = { source, sourceServers, targets: [] };
+  syncBody.innerHTML = "";
+
+  const targets = accounts.filter((a) => a.id !== source);
+  if (!names.length || !targets.length) {
+    syncEmpty.hidden = false;
+    syncEmpty.textContent = !names.length
+      ? "No MCP servers found in the selected source."
+      : "Add another account to sync into.";
+    syncBody.style.display = "none";
+    return;
+  }
+  syncEmpty.hidden = true;
+  syncBody.style.display = "flex";
+
+  for (const acc of targets) {
+    const current = (await invoke("get_mcp_servers", { id: acc.id })) || {};
+    const rows = names
+      .map((n) => {
+        const checked = Object.prototype.hasOwnProperty.call(current, n) ? "checked" : "";
+        return `<label class="sync-server"><input type="checkbox" data-acc="${escapeHtml(acc.id)}" data-name="${escapeHtml(n)}" ${checked}/> <code>${escapeHtml(n)}</code></label>`;
+      })
+      .join("");
+    const sec = document.createElement("div");
+    sec.className = "sync-account";
+    sec.innerHTML = `<div class="sync-account-name">${escapeHtml(acc.name)}</div>${rows}`;
+    syncBody.appendChild(sec);
+    syncState.targets.push({ id: acc.id, current });
+  }
+}
+
+async function applySync() {
+  const names = Object.keys(syncState.sourceServers);
+  let count = 0;
+  for (const t of syncState.targets) {
+    const desired = {};
+    // keep servers the target already has that aren't part of the source set
+    for (const [k, v] of Object.entries(t.current)) {
+      if (!names.includes(k)) desired[k] = v;
+    }
+    // add the ticked source servers
+    syncBody.querySelectorAll(`input[data-acc="${cssEscape(t.id)}"]`).forEach((cb) => {
+      if (cb.checked) desired[cb.dataset.name] = syncState.sourceServers[cb.dataset.name];
+    });
+    await invoke("set_mcp_servers", { id: t.id, servers: desired });
+    count++;
+  }
+  syncOverlay.hidden = true;
+  toast(count ? `Synced ${count} account${count > 1 ? "s" : ""}` : "Nothing to sync");
+}
+
+function cssEscape(s) {
+  return String(s).replace(/["\\]/g, "\\$&");
+}
+
+document.getElementById("syncBtn").onclick = openSync;
+document.getElementById("syncCancel").onclick = () => {
+  syncOverlay.hidden = true;
+};
+document.getElementById("syncApply").onclick = applySync;
+syncSourceSel.onchange = loadSyncMatrix;
+syncOverlay.addEventListener("click", (e) => {
+  if (e.target === syncOverlay) syncOverlay.hidden = true;
+});
 
 /* ---------------- boot ---------------- */
 let pollTimer = null;

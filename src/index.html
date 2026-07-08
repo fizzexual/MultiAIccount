@@ -20,6 +20,9 @@
           <span id="claudeStatus" class="status-chip is-checking">
             <span class="status-led"></span><span id="statusText">Checking…</span>
           </span>
+          <button id="syncBtn" class="btn" title="Sync MCP servers & config across accounts">
+            <span class="sync-ico">⇄</span> Sync
+          </button>
           <button id="addBtn" class="btn btn-primary">
             <span class="plus">+</span> Add account
           </button>
@@ -102,6 +105,31 @@
           folder so it can run in isolated profiles. This only happens once, and
           again briefly whenever Claude updates.
         </p>
+      </div>
+    </div>
+
+    <!-- sync config modal -->
+    <div id="syncOverlay" class="overlay" hidden>
+      <div class="modal sync-modal" role="dialog" aria-modal="true">
+        <h3>Sync MCP servers &amp; config</h3>
+        <p class="modal-body">
+          Copy MCP servers from a source into your isolated accounts. Tick which
+          servers each account should have, then Apply.
+        </p>
+        <div class="sync-source">
+          <span class="sync-source-label">Source</span>
+          <select id="syncSource" class="select"></select>
+        </div>
+        <div id="syncBody" class="sync-body"></div>
+        <p id="syncEmpty" class="sync-empty" hidden>No MCP servers found in the selected source.</p>
+        <p class="sync-note">
+          Note: custom <b>skills</b> are stored per Claude account on Anthropic's
+          servers, so they're added inside each account — not synced here.
+        </p>
+        <div class="modal-actions">
+          <button id="syncCancel" class="btn btn-ghost">Cancel</button>
+          <button id="syncApply" class="btn btn-primary">Apply</button>
+        </div>
       </div>
     </div>
 

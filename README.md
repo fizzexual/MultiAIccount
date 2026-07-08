@@ -23,9 +23,29 @@ This launcher works around that:
 2. **Auto-re-mirror** whenever the installed Claude version changes — so it stays
    current through updates automatically (a quick incremental copy).
 3. **Launch** that mirrored `claude.exe` per account with:
-   - `--user-data-dir=<per-account folder>` → isolated login / data, and
+   - the **`CLAUDE_USER_DATA_DIR`** environment variable set to a per-account
+     folder — this is Claude's *own* mechanism for a custom profile, and it's
+     what makes multiple instances actually coexist (see below),
+   - `--user-data-dir=<same folder>` → isolated Chromium profile / single-instance
+     lock, and
    - `--no-sandbox` → **required**, because a relocated/unpackaged Electron app's
      child processes crash without it.
+
+### Why `CLAUDE_USER_DATA_DIR` (not just `--user-data-dir`)
+
+Claude's main process contains this logic:
+
+```js
+if (process.env.CLAUDE_USER_DATA_DIR) app.setPath("userData", <that dir>)
+else /* on Windows */ app.setPath("userData", LOCALAPPDATA\Claude-3p)   // a single shared folder
+```
+
+Without the env var, the app **overrides** whatever `--user-data-dir` you pass and
+forces `userData` onto one shared folder (`Claude-3p`). Every instance then shares
+the same single-instance lock, so opening a second account just focuses/replaces
+the first — you can't run more than one. Setting `CLAUDE_USER_DATA_DIR` per account
+skips that override, giving each account a genuinely separate instance that runs
+alongside the others and your main app.
 
 ### The `--no-sandbox` tradeoff (read this)
 
@@ -71,11 +91,18 @@ A ready-to-run `Claude Accounts.exe` is also placed on your Desktop.
 Data layout (all under `%LOCALAPPDATA%\dev.deckspace.claude-accounts`):
 
 ```
-accounts.json     your accounts (names, colors)
-mirror.json       which Claude version is currently mirrored
-claude-app\       the mirrored Claude desktop app (auto-updated)
-profiles\<id>\    isolated login/data per account
+accounts.json      your accounts (names, colors)
+accounts.bak.json  automatic backup of the above
+mirror.json        which Claude version is currently mirrored
+claude-app\        the mirrored Claude desktop app (auto-updated)
+profiles\<id>\     isolated login/data per account (+ .ca-meta.json)
 ```
+
+**Your accounts can't be silently lost.** `accounts.json` is written durably
+(temp file → fsync → atomic rename) and backed up on every change, and a bad read
+never overwrites it with a blank list. Each profile folder also stores its own
+`.ca-meta.json`, so if the index is ever lost the launcher **rebuilds the account
+list from the surviving profiles** (which hold your logins) on next start.
 
 ---
 
