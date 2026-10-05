@@ -1,4 +1,4 @@
-# Claude Accounts
+# Claude Accounts 🍂
 
 Run multiple **isolated copies of the real Claude desktop app** side by side —
 each with its own login, kept completely separate from your main Claude. A small
@@ -6,6 +6,14 @@ native launcher built with [Tauri](https://v2.tauri.app/) (Rust).
 
 > Independent utility. Not affiliated with, or endorsed by, Anthropic.
 > Your main Claude login (`%APPDATA%\Claude`) is never used or touched.
+
+## About
+
+Claude Accounts is a Windows-only launcher for people who use more than one Claude account
+(for example work and personal) and want them open at the same time in the real desktop app.
+It mirrors the Store-installed Claude app and starts each account in its own data folder. It is
+a small personal utility at version 1.0.0, built from source with Cargo; there is no installer
+release yet.
 
 ---
 
